@@ -303,18 +303,61 @@ def send_appointment_rescheduled(customer_phone, customer_name,
         old_date_obj = datetime.strptime(old_date, '%Y-%m-%d')
         new_date_obj = datetime.strptime(new_date, '%Y-%m-%d')
         
-        old_formatted_date = old_date_obj.strftime('%A, %B %d, %Y')
-        new_formatted_date = new_date_obj.strftime('%A, %B %d, %Y')
+        # Türkçe gün ve ay isimleri
+        turkish_days = {
+            'Monday': 'Pazartesi',
+            'Tuesday': 'Salı',
+            'Wednesday': 'Çarşamba',
+            'Thursday': 'Perşembe',
+            'Friday': 'Cuma',
+            'Saturday': 'Cumartesi',
+            'Sunday': 'Pazar'
+        }
         
-        # Build message
-        message = f"Hello {customer_name}! Your appointment has been rescheduled.\n\n"
-        message += f"Original: {old_formatted_date} at {old_time}\n\n"
-        message += f"New Date: {new_formatted_date}\n"
-        message += f"New Time: {new_time}\n"
-        message += f"Service: {service_name}\n"
-        message += f"Barber: {barber_name}\n\n"
-        message += f"Thank you for choosing {BUSINESS_NAME}. "
-        message += "Send 'HELP' for assistance or 'CANCEL' to cancel your appointment."
+        turkish_months = {
+            'January': 'Ocak',
+            'February': 'Şubat',
+            'March': 'Mart',
+            'April': 'Nisan',
+            'May': 'Mayıs',
+            'June': 'Haziran',
+            'July': 'Temmuz',
+            'August': 'Ağustos',
+            'September': 'Eylül',
+            'October': 'Ekim',
+            'November': 'Kasım',
+            'December': 'Aralık'
+        }
+        
+        # İngilizce formatı al
+        old_english_date = old_date_obj.strftime('%A, %B %d, %Y')
+        new_english_date = new_date_obj.strftime('%A, %B %d, %Y')
+        
+        # Türkçe'ye çevir - Eski tarih
+        day_name = old_english_date.split(',')[0]
+        month_name = old_english_date.split(' ')[1]
+        day_num = old_english_date.split(' ')[2].replace(',', '')
+        year = old_english_date.split(' ')[3]
+        
+        old_formatted_date = f"{turkish_days[day_name]}, {day_num} {turkish_months[month_name]} {year}"
+        
+        # Türkçe'ye çevir - Yeni tarih
+        day_name = new_english_date.split(',')[0]
+        month_name = new_english_date.split(' ')[1]
+        day_num = new_english_date.split(' ')[2].replace(',', '')
+        year = new_english_date.split(' ')[3]
+        
+        new_formatted_date = f"{turkish_days[day_name]}, {day_num} {turkish_months[month_name]} {year}"
+        
+        # Build message in Turkish
+        message = f"Merhaba {customer_name}! Randevunuz yeniden planlandı.\n\n"
+        message += f"Önceki: {old_formatted_date} saat {old_time}\n\n"
+        message += f"Yeni Tarih: {new_formatted_date}\n"
+        message += f"Yeni Saat: {new_time}\n"
+        message += f"Hizmet: {service_name}\n"
+        message += f"Berber: {barber_name}\n\n"
+        message += f"{BUSINESS_NAME}'i tercih ettiğiniz için teşekkür ederiz. "
+        message += "Yardım için 'YARDIM' yazabilir veya randevunuzu iptal etmek için 'İPTAL' yazabilirsiniz."
         
         return send_whatsapp_message(customer_phone, message)
     except Exception as e:
@@ -345,33 +388,34 @@ def process_incoming_message(from_phone, message_body):
             
         message_upper = message_body.strip().upper()
         
-        # Handle common keywords
-        if message_upper == 'HELP':
-            response = "Thank you for contacting us. To book an appointment, simply send 'BOOK'. "
-            response += "To cancel an appointment, send 'CANCEL'. "
-            response += f"For more assistance, please call {BUSINESS_NAME} directly."
+        # Handle common keywords in Turkish and English
+        if message_upper == 'HELP' or message_upper == 'YARDIM':
+            response = f"Bizimle iletişime geçtiğiniz için teşekkür ederiz. "
+            response += "Randevu almak için 'RANDEVU' yazabilirsiniz. "
+            response += "Randevunuzu iptal etmek için 'İPTAL' yazabilirsiniz. "
+            response += f"Daha fazla yardım için lütfen {BUSINESS_NAME} ile doğrudan iletişime geçin."
             send_whatsapp_message(from_phone, response)
             return {'status': 'success', 'action': 'help_sent'}
             
-        elif message_upper == 'CANCEL':
+        elif message_upper == 'CANCEL' or message_upper == 'İPTAL':
             # This would typically trigger the cancellation flow
-            response = "To cancel an appointment, please provide your appointment date and time. "
-            response += "For example: 'CANCEL April 15, 2:30 PM'"
+            response = "Randevunuzu iptal etmek için lütfen randevu tarih ve saatinizi belirtin. "
+            response += "Örnek: 'İPTAL 15 Nisan, 14:30'"
             send_whatsapp_message(from_phone, response)
             return {'status': 'success', 'action': 'cancel_instructions_sent'}
             
-        elif message_upper.startswith('BOOK'):
+        elif message_upper.startswith('BOOK') or message_upper.startswith('RANDEVU'):
             # This would typically trigger the booking flow
-            response = "Thank you for your interest in booking an appointment. "
-            response += "Please let us know which service you'd like and your preferred date and time."
+            response = "Randevu almak istediğiniz için teşekkür ederiz. "
+            response += "Lütfen hangi hizmeti almak istediğinizi ve tercih ettiğiniz tarih ve saati belirtin."
             send_whatsapp_message(from_phone, response)
             return {'status': 'success', 'action': 'booking_started'}
             
         else:
             # For any other message, we would typically use AI to process it
             # For now, just acknowledge the message
-            response = "Thank you for your message. Our system will process your request shortly. "
-            response += f"If you need immediate assistance, please call {BUSINESS_NAME} directly."
+            response = "Mesajınız için teşekkür ederiz. Sistemimiz kısa süre içinde talebinizi işleme alacaktır. "
+            response += f"Acil yardım için lütfen {BUSINESS_NAME} ile doğrudan iletişime geçin."
             send_whatsapp_message(from_phone, response)
             return {'status': 'success', 'action': 'message_acknowledged'}
             

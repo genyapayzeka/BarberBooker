@@ -36,6 +36,9 @@ def analyze_message(message, context=None):
         - greeting: Customer is just saying hello
         - other: Cannot determine the intent
         
+        Important: Support both English and Turkish messages. Analyze the language used and detect
+        Turkish words like "randevu" (appointment), "iptal" (cancel), "saç kesimi" (haircut), etc.
+        
         For booking, cancel, and reschedule intents, extract the following information if present:
         - date: Any mentioned date for the appointment
         - time: Any mentioned time for the appointment
@@ -50,10 +53,12 @@ def analyze_message(message, context=None):
             "service": "extracted service or null",
             "barber": "extracted barber name or null",
             "needs_followup": true/false,
-            "followup_question": "question to ask if more information is needed"
+            "followup_question": "question to ask if more information is needed",
+            "detected_language": "en or tr"
         }
         
         The response should be a valid JSON object, nothing else.
+        If the detected language is Turkish, provide the followup_question in Turkish.
         """
         
         # Create the user message, including context if provided
@@ -108,6 +113,8 @@ def generate_response(analysis_result, customer_name=None, business_name=None):
         system_prompt = """
         You are a friendly assistant for a barber shop. Your job is to respond to customer messages
         in a friendly, professional tone. Be concise but helpful.
+        
+        Important: If the customer's message is in Turkish, respond in Turkish. If it's in English, respond in English.
         
         Use the following guidelines:
         - For booking requests: Confirm the details that were understood and ask for any missing information
@@ -166,6 +173,13 @@ def process_whatsapp_message(message, customer_info=None, business_name=None):
         
     Returns:
         dict: Processing result with analysis and response
+        
+    Notes:
+        This function now supports multiple languages, specifically Turkish.
+        The AI model will detect the language of the incoming message and respond
+        in the same language. Currently supported languages:
+        - English
+        - Turkish (Türkçe)
     """
     try:
         # Analyze the message

@@ -151,10 +151,10 @@ def process_message(phone_number, sender_name, message_text):
             
             customer = db_service.create_customer(customer_data)
             
-            # Send a welcome message
-            welcome_message = f"Hello {sender_name}! Welcome to {BUSINESS_NAME}. "
-            welcome_message += "I'm your virtual assistant, here to help you book appointments and answer questions. "
-            welcome_message += "How can I help you today?"
+            # Send a welcome message in Turkish
+            welcome_message = f"Merhaba {sender_name}! {BUSINESS_NAME}'e hoş geldiniz. "
+            welcome_message += "Ben sizin sanal asistanınızım, randevu almanıza ve sorularınızı yanıtlamanıza yardımcı olmak için buradayım. "
+            welcome_message += "Bugün size nasıl yardımcı olabilirim?"
             
             whatsapp_service.send_whatsapp_message(phone_number, welcome_message)
         
@@ -176,10 +176,10 @@ def process_message(phone_number, sender_name, message_text):
                 handle_cancel_intent(phone_number, customer, ai_result['analysis'])
             
         else:
-            # AI processing failed, send default message
-            default_message = f"Hello {sender_name}, thank you for your message. "
-            default_message += "I'm experiencing some technical difficulties at the moment. "
-            default_message += f"Please call {BUSINESS_NAME} directly for assistance."
+            # AI processing failed, send default message in Turkish
+            default_message = f"Merhaba {sender_name}, mesajınız için teşekkür ederiz. "
+            default_message += "Şu anda bazı teknik sorunlar yaşıyorum. "
+            default_message += f"Lütfen yardım için doğrudan {BUSINESS_NAME} ile iletişime geçin."
             
             whatsapp_service.send_whatsapp_message(phone_number, default_message)
     
