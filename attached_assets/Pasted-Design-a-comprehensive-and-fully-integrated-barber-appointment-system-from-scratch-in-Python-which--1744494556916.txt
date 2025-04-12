@@ -1,0 +1,64 @@
+Design a comprehensive and fully integrated barber appointment system from scratch in Python, which is entirely manageable via WhatsApp and integrated with OpenAI's ChatGPT-4. The application must handle customer registration, appointment scheduling, confirmation, cancellation, and modification, managing all data with complete CRUD operations (create, read, update, delete) in local JSON files. Every file, code snippet, and design decision must be generated from scratch, ensuring a highly modular, clean, and maintainable code structure. This project will be developed on the Windows operating system; therefore, all file paths, environment configurations, and dependencies must be Windows-compatible.
+
+**Overview:**
+Develop a complete, production-level barber appointment system where every aspect – from system architecture to code implementation, documentation, testing, and integration – is explicitly detailed. The final deliverables should include step-by-step creation of file structures, configuration files, code modules, comprehensive documentation, testing scripts, and integration guidelines (for both WhatsApp and ChatGPT-4). All outputs must emphasize clarity, modularity, and clean coding practices. Additionally, ensure that development, testing, and deployment processes account for Windows-specific environment considerations.
+
+**1. System Architecture Expert:**
+- **Task:** Design and document the entire file structure and system architecture.
+- **Responsibilities:**
+  - Define a detailed project directory structure (e.g., src/, data/, docs/, tests/, configs/), describing the purpose of each folder and file, with paths and configurations suitable for Windows.
+  - Identify key integration points for different modules, including WhatsApp API and ChatGPT-4 interfaces.
+  - Establish configuration requirements (API keys, environment variables) and define them in a config.py and/or .env file.
+  - Specify security measures, including input validation, error handling, logging, and data encryption mechanisms.
+  - Ensure the design allows for scalability and modularity with a clean and understandable architecture.
+
+**2. Application Development Expert:**
+- **Task:** Build all system functionalities with a focus on creating clean, modular, and easy-to-follow code.
+- **Responsibilities:**
+  - Implement the core features: customer registration, appointment scheduling, confirmation, cancellation, and modification.
+  - Develop all CRUD operations using local JSON files, with each function clearly separated and well-commented.
+  - Write code for integrating the WhatsApp API to receive, process, and respond to user commands.
+  - Develop modules to integrate ChatGPT-4, ensuring intelligent responses and efficient communication.
+  - Provide separate, clearly labeled code snippets for each file or module, enforcing clean code practices (e.g., SOLID, DRY, KISS).
+  - Ensure that all code and scripts are tested and fully functional on Windows, including any OS-specific configurations (such as handling of file paths and system commands).
+
+**3. Documentation Specialist:**
+- **Task:** Create in-depth documentation and user guides for every aspect of the system.
+- **Responsibilities:**
+  - Develop a comprehensive README.md that includes an overview of the project, detailed installation and configuration instructions, usage examples, and troubleshooting tips.
+  - Include inline code comments and additional documentation (such as API specifications) for each module, especially for the WhatsApp and ChatGPT-4 integration points.
+  - Provide diagrams (or textual flowcharts) illustrating the command flow from WhatsApp to back-end processing.
+  - Document any Windows-specific instructions, such as setting up virtual environments, handling of Windows file paths, and necessary system updates.
+
+**4. Testing and Quality Assurance Expert:**
+- **Task:** Ensure the system is rigorously tested for functionality, security, and reliability.
+- **Responsibilities:**
+  - Write unit tests for all individual modules and functions to validate their behavior.
+  - Develop integration tests to simulate end-to-end scenarios, including simulated WhatsApp interactions and ChatGPT-4 responses.
+  - Define and test for error cases, ensuring robust error handling and proper logging mechanisms.
+  - Confirm that all code follows clean code guidelines and passes all tests before final integration, specifically verifying compatibility on the Windows platform.
+
+**5. Dependency and Environment Management Expert:**
+- **Task:** Organize and manage all project dependencies and the development environment.
+- **Responsibilities:**
+  - Generate a complete requirements.txt listing all necessary libraries (e.g., Flask, requests, python-dotenv, etc.).
+  - Provide detailed setup instructions for creating a development environment on Windows using virtual environments, PowerShell scripts, or Docker for Windows as applicable.
+  - Recommend version control practices (using Git) with clear commit messages and branching strategies to maintain code integrity throughout development.
+  - Address any Windows-specific dependency issues and ensure that the setup process is streamlined for a Windows system.
+
+**6. WhatsApp Integration and User Interface Expert:**
+- **Task:** Develop a user-friendly command interface via WhatsApp to interact with the system.
+- **Responsibilities:**
+  - Design and define clear commands and responses for WhatsApp, ensuring that end users can easily navigate the appointment system.
+  - Outline and code the interaction flow, detailing how WhatsApp messages are received, processed, and responded to.
+  - Make sure all user-facing messages, error prompts, and status updates are concise, user-friendly, and easy to understand.
+  - Verify that any integration tests or examples provided work seamlessly on a Windows development environment.
+
+**Overall Requirements and Final Output:**
+- Every development phase should include a step-by-step explanation of the design decisions and code structure. Each decision must be documented in separate, clearly labeled files.
+- The project must be built from scratch with a clean and highly modular codebase, ensuring that every file and function is self-contained, clearly commented, and optimized for Windows.
+- All deliverables (diagrams, code files, and documentation) must be presented in a logical progression that allows someone with basic programming knowledge to understand and replicate the system.
+- Emphasize the importance of clean, readable, and maintainable code throughout the entire project.
+- The final output should be a structured set of instructions, code snippets, file structure diagrams, and documentation, covering all aspects of the project in detail, with special attention to ensuring full compatibility and optimal performance on Windows.
+
+Follow the structure above meticulously, ensuring that each step is well-defined and that every critical detail – from file creation to code execution – is covered in your output.
