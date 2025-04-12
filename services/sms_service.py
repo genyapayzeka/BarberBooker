@@ -1,5 +1,5 @@
 """
-WhatsApp messaging service using Twilio's WhatsApp API
+SMS service for sending text messages using Twilio
 """
 import os
 import logging
@@ -16,9 +16,9 @@ TWILIO_PHONE_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER")
 
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
-def send_whatsapp_message(to_phone, message):
+def send_sms(to_phone, message):
     """
-    Send a WhatsApp message using Twilio
+    Send an SMS message using Twilio
     
     Args:
         to_phone: Recipient's phone number
@@ -32,22 +32,21 @@ def send_whatsapp_message(to_phone, message):
         if not to_phone.startswith('+'):
             to_phone = '+' + to_phone
             
-        # Send the message via WhatsApp
-        # Twilio's WhatsApp API requires 'whatsapp:' prefix
+        # Send the message
         message = client.messages.create(
             body=message,
-            from_=f'whatsapp:{TWILIO_PHONE_NUMBER}',
-            to=f'whatsapp:{to_phone}'
+            from_=TWILIO_PHONE_NUMBER,
+            to=to_phone
         )
         
-        logger.info(f"WhatsApp message sent to {to_phone}: {message.sid}")
+        logger.info(f"SMS sent to {to_phone}: {message.sid}")
         return {
             'status': 'success',
             'message_sid': message.sid,
             'to': to_phone
         }
     except Exception as e:
-        logger.error(f"Error sending WhatsApp message to {to_phone}: {str(e)}")
+        logger.error(f"Error sending SMS to {to_phone}: {str(e)}")
         return {
             'status': 'error',
             'error': str(e),
@@ -57,7 +56,7 @@ def send_whatsapp_message(to_phone, message):
 def send_appointment_confirmation(customer_phone, customer_name, appointment_date, 
                                  appointment_time, barber_name, service_name):
     """
-    Send an appointment confirmation message via WhatsApp
+    Send an appointment confirmation message
     
     Args:
         customer_phone: Customer's phone number
@@ -68,7 +67,7 @@ def send_appointment_confirmation(customer_phone, customer_name, appointment_dat
         service_name: Service name
         
     Returns:
-        dict: Response from send_whatsapp_message function
+        dict: Response from send_sms function
     """
     try:
         # Format date for display
@@ -82,11 +81,11 @@ def send_appointment_confirmation(customer_phone, customer_name, appointment_dat
         message += f"Service: {service_name}\n"
         message += f"Barber: {barber_name}\n\n"
         message += f"Thank you for choosing {BUSINESS_NAME}. "
-        message += "Send 'HELP' for assistance or 'CANCEL' to cancel your appointment."
+        message += "Reply 'HELP' for assistance or 'CANCEL' to cancel your appointment."
         
-        return send_whatsapp_message(customer_phone, message)
+        return send_sms(customer_phone, message)
     except Exception as e:
-        logger.error(f"Error sending confirmation WhatsApp message: {str(e)}")
+        logger.error(f"Error sending confirmation SMS: {str(e)}")
         return {
             'status': 'error',
             'error': str(e)
@@ -95,7 +94,7 @@ def send_appointment_confirmation(customer_phone, customer_name, appointment_dat
 def send_appointment_reminder(customer_phone, customer_name, appointment_date, 
                              appointment_time, barber_name, service_name, reminder_hours=24):
     """
-    Send an appointment reminder message via WhatsApp
+    Send an appointment reminder message
     
     Args:
         customer_phone: Customer's phone number
@@ -107,7 +106,7 @@ def send_appointment_reminder(customer_phone, customer_name, appointment_date,
         reminder_hours: Hours before appointment to mention in message
         
     Returns:
-        dict: Response from send_whatsapp_message function
+        dict: Response from send_sms function
     """
     try:
         # Format date for display
@@ -127,11 +126,11 @@ def send_appointment_reminder(customer_phone, customer_name, appointment_date,
             message += f"Your appointment is in {reminder_hours} hours. "
             
         message += f"We look forward to seeing you at {BUSINESS_NAME}. "
-        message += "Send 'HELP' for assistance or 'CANCEL' to cancel your appointment."
+        message += "Reply 'HELP' for assistance or 'CANCEL' to cancel your appointment."
         
-        return send_whatsapp_message(customer_phone, message)
+        return send_sms(customer_phone, message)
     except Exception as e:
-        logger.error(f"Error sending reminder WhatsApp message: {str(e)}")
+        logger.error(f"Error sending reminder SMS: {str(e)}")
         return {
             'status': 'error',
             'error': str(e)
@@ -139,7 +138,7 @@ def send_appointment_reminder(customer_phone, customer_name, appointment_date,
 
 def send_appointment_cancelled(customer_phone, customer_name, appointment_date, appointment_time):
     """
-    Send an appointment cancellation message via WhatsApp
+    Send an appointment cancellation message
     
     Args:
         customer_phone: Customer's phone number
@@ -148,7 +147,7 @@ def send_appointment_cancelled(customer_phone, customer_name, appointment_date, 
         appointment_time: Time of appointment (HH:MM)
         
     Returns:
-        dict: Response from send_whatsapp_message function
+        dict: Response from send_sms function
     """
     try:
         # Format date for display
@@ -162,9 +161,9 @@ def send_appointment_cancelled(customer_phone, customer_name, appointment_date, 
         message += f"Thank you for choosing {BUSINESS_NAME}. "
         message += "Please contact us if you would like to reschedule."
         
-        return send_whatsapp_message(customer_phone, message)
+        return send_sms(customer_phone, message)
     except Exception as e:
-        logger.error(f"Error sending cancellation WhatsApp message: {str(e)}")
+        logger.error(f"Error sending cancellation SMS: {str(e)}")
         return {
             'status': 'error',
             'error': str(e)
@@ -175,7 +174,7 @@ def send_appointment_rescheduled(customer_phone, customer_name,
                                 new_date, new_time, 
                                 barber_name, service_name):
     """
-    Send an appointment rescheduled message via WhatsApp
+    Send an appointment rescheduled message
     
     Args:
         customer_phone: Customer's phone number
@@ -188,7 +187,7 @@ def send_appointment_rescheduled(customer_phone, customer_name,
         service_name: Service name
         
     Returns:
-        dict: Response from send_whatsapp_message function
+        dict: Response from send_sms function
     """
     try:
         # Format dates for display
@@ -206,69 +205,11 @@ def send_appointment_rescheduled(customer_phone, customer_name,
         message += f"Service: {service_name}\n"
         message += f"Barber: {barber_name}\n\n"
         message += f"Thank you for choosing {BUSINESS_NAME}. "
-        message += "Send 'HELP' for assistance or 'CANCEL' to cancel your appointment."
+        message += "Reply 'HELP' for assistance or 'CANCEL' to cancel your appointment."
         
-        return send_whatsapp_message(customer_phone, message)
+        return send_sms(customer_phone, message)
     except Exception as e:
-        logger.error(f"Error sending rescheduled WhatsApp message: {str(e)}")
-        return {
-            'status': 'error',
-            'error': str(e)
-        }
-
-def process_incoming_message(from_phone, message_body):
-    """
-    Process incoming WhatsApp messages
-    
-    Args:
-        from_phone: Sender's phone number
-        message_body: Message content
-        
-    Returns:
-        dict: Response with action to take
-    """
-    try:
-        # Clean up the phone number and message
-        if from_phone.startswith('whatsapp:'):
-            from_phone = from_phone[9:]  # Remove 'whatsapp:' prefix
-            
-        if from_phone.startswith('+'):
-            from_phone = from_phone[1:]  # Remove '+' prefix
-            
-        message_upper = message_body.strip().upper()
-        
-        # Handle common keywords
-        if message_upper == 'HELP':
-            response = "Thank you for contacting us. To book an appointment, simply send 'BOOK'. "
-            response += "To cancel an appointment, send 'CANCEL'. "
-            response += f"For more assistance, please call {BUSINESS_NAME} directly."
-            send_whatsapp_message(from_phone, response)
-            return {'status': 'success', 'action': 'help_sent'}
-            
-        elif message_upper == 'CANCEL':
-            # This would typically trigger the cancellation flow
-            response = "To cancel an appointment, please provide your appointment date and time. "
-            response += "For example: 'CANCEL April 15, 2:30 PM'"
-            send_whatsapp_message(from_phone, response)
-            return {'status': 'success', 'action': 'cancel_instructions_sent'}
-            
-        elif message_upper.startswith('BOOK'):
-            # This would typically trigger the booking flow
-            response = "Thank you for your interest in booking an appointment. "
-            response += "Please let us know which service you'd like and your preferred date and time."
-            send_whatsapp_message(from_phone, response)
-            return {'status': 'success', 'action': 'booking_started'}
-            
-        else:
-            # For any other message, we would typically use AI to process it
-            # For now, just acknowledge the message
-            response = "Thank you for your message. Our system will process your request shortly. "
-            response += f"If you need immediate assistance, please call {BUSINESS_NAME} directly."
-            send_whatsapp_message(from_phone, response)
-            return {'status': 'success', 'action': 'message_acknowledged'}
-            
-    except Exception as e:
-        logger.error(f"Error processing incoming WhatsApp message: {str(e)}")
+        logger.error(f"Error sending rescheduled SMS: {str(e)}")
         return {
             'status': 'error',
             'error': str(e)
