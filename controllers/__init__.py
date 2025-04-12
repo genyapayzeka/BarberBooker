@@ -9,12 +9,14 @@ def init_app(app):
     from controllers.customer_controller import customer_bp
     from controllers.whatsapp_controller import whatsapp_bp
     from controllers.admin_controller import admin_bp
+    from controllers.webhook_controller import webhook_bp
     
     # Register blueprints with the app
     app.register_blueprint(appointment_bp)
     app.register_blueprint(customer_bp)
     app.register_blueprint(whatsapp_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(webhook_bp)
     
     # Add root route
     @app.route('/')

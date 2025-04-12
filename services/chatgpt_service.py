@@ -1,168 +1,188 @@
 """
-ChatGPT service for natural language processing and generating responses
+ChatGPT service for natural language processing using OpenAI API
 """
 import os
 import json
 import logging
+from datetime import datetime, timedelta
 from openai import OpenAI
-from config import OPENAI_API_KEY, OPENAI_MODEL, MAX_TOKENS, BUSINESS_NAME, BUSINESS_HOURS
 
 logger = logging.getLogger(__name__)
 
 # Initialize OpenAI client
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# System prompt template for the barber shop assistant
-SYSTEM_PROMPT = f"""
-You are a helpful virtual assistant for {BUSINESS_NAME}, a barber shop. Your role is to assist customers with booking appointments, providing information about services, 
-and answering general questions about the business. Use a friendly, professional tone in your responses.
-
-Business Information:
-- Name: {BUSINESS_NAME}
-- Business Hours: {json.dumps(BUSINESS_HOURS)}
-
-Key functions you can help with:
-1. Booking, rescheduling, or canceling appointments
-2. Providing information about services and prices
-3. Answering questions about barbers and their availability
-4. Explaining business hours and location details
-5. Handling general inquiries about the barber shop
-
-Please respond to the customer's message in a helpful way. If they are trying to book an appointment, extract the relevant details like service type, 
-preferred date/time, and preferred barber if mentioned. If they are requesting information, provide it clearly and concisely.
-
-Important: Do not make up information. If you don't know something, acknowledge it and offer to connect them with a staff member who can help.
-"""
-
-def process_message(message, context=None):
+def analyze_message(message, context=None):
     """
-    Process a message using GPT-4o and generate a response
+    Analyze a message using ChatGPT to determine intent and extract relevant information
     
     Args:
-        message: User's message text
-        context: Optional dictionary with contextual information
+        message: Message content to analyze
+        context: Optional dictionary with additional context (customer info, etc.)
         
     Returns:
-        dict: Response with text and extracted entities
+        dict: Analysis results including intent and extracted data
     """
     try:
-        # Build the messages array for the API call
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT}
-        ]
+        # Define the system prompt with instructions
+        system_prompt = """
+        You are an assistant for a barber shop. Your job is to understand messages from customers 
+        and identify their intent. Possible intents include:
+        - booking: Customer wants to book an appointment
+        - cancel: Customer wants to cancel an existing appointment
+        - reschedule: Customer wants to reschedule an existing appointment
+        - info: Customer is asking for information
+        - greeting: Customer is just saying hello
+        - other: Cannot determine the intent
         
-        # Add context messages if available
-        if context and "history" in context:
-            for msg in context["history"]:
-                messages.append(msg)
+        For booking, cancel, and reschedule intents, extract the following information if present:
+        - date: Any mentioned date for the appointment
+        - time: Any mentioned time for the appointment
+        - service: Any mentioned service (haircut, beard trim, etc.)
+        - barber: Any mentioned barber's name
         
-        # Add the current user message
-        messages.append({"role": "user", "content": message})
-        
-        # Call the OpenAI API
-        response = client.chat.completions.create(
-            model=OPENAI_MODEL,  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-            messages=messages,
-            max_tokens=MAX_TOKENS,
-            temperature=0.7,
-        )
-        
-        # Extract the response text
-        response_text = response.choices[0].message.content
-        
-        # Extract entities for appointment booking
-        entities = extract_entities(message)
-        
-        return {
-            "text": response_text,
-            "entities": entities
+        Format your response as a JSON object with the following structure:
+        {
+            "intent": "one of the intents listed above",
+            "date": "extracted date or null",
+            "time": "extracted time or null",
+            "service": "extracted service or null",
+            "barber": "extracted barber name or null",
+            "needs_followup": true/false,
+            "followup_question": "question to ask if more information is needed"
         }
         
-    except Exception as e:
-        logger.error(f"Error processing message with GPT-4o: {str(e)}")
-        return {
-            "text": "I'm sorry, I'm having trouble processing your request. Could you please try again or contact our staff directly?",
-            "entities": {}
-        }
-
-def extract_entities(message):
-    """
-    Extract entities related to appointment booking from a message
-    
-    Args:
-        message: User's message text
-        
-    Returns:
-        dict: Extracted entities (service_type, date, time, barber)
-    """
-    try:
-        # Call the OpenAI API with a specific prompt for entity extraction
-        prompt = f"""
-Extract the following entities from this message about booking a barber appointment, if present:
-1. Service type (haircut, beard trim, etc.)
-2. Date (in YYYY-MM-DD format)
-3. Time (in HH:MM format, 24-hour)
-4. Barber name
-
-Message: "{message}"
-
-Respond with a JSON object containing these keys: service_type, date, time, barber. 
-Use null for any entity not found in the message.
+        The response should be a valid JSON object, nothing else.
         """
         
+        # Create the user message, including context if provided
+        user_message = message
+        if context:
+            user_message += "\n\nContext: " + json.dumps(context)
+        
+        # Make API call to ChatGPT
+        # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+        # do not change this unless explicitly requested by the user
         response = client.chat.completions.create(
-            model=OPENAI_MODEL,  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=150,
-            temperature=0,
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ],
             response_format={"type": "json_object"}
         )
         
-        # Parse the JSON response
-        entities = json.loads(response.choices[0].message.content)
-        
-        return entities
-        
+        # Parse the response
+        result = json.loads(response.choices[0].message.content)
+        logger.info(f"Message analysis result: {result}")
+        return result
+    
     except Exception as e:
-        logger.error(f"Error extracting entities: {str(e)}")
+        logger.error(f"Error analyzing message with ChatGPT: {str(e)}")
+        # Return a default response in case of error
         return {
-            "service_type": None,
+            "intent": "other",
             "date": None,
             "time": None,
-            "barber": None
+            "service": None,
+            "barber": None,
+            "needs_followup": True,
+            "followup_question": "I'm sorry, I'm having trouble understanding. Could you please rephrase your request?"
         }
 
-def generate_appointment_summary(appointment_data):
+def generate_response(analysis_result, customer_name=None, business_name=None):
     """
-    Generate a human-readable summary of an appointment
+    Generate a natural language response based on the analysis result
     
     Args:
-        appointment_data: Dictionary with appointment details
+        analysis_result: Result from analyze_message function
+        customer_name: Optional customer name to personalize the response
+        business_name: Optional business name to include in the response
         
     Returns:
-        str: Human-readable appointment summary
+        str: Generated response text
     """
     try:
-        prompt = f"""
-Generate a brief, friendly summary of this barber appointment:
-- Customer: {appointment_data.get('customer_name')}
-- Date: {appointment_data.get('date')}
-- Time: {appointment_data.get('time')}
-- Service: {appointment_data.get('service_name')}
-- Barber: {appointment_data.get('barber_name')}
-
-Keep it concise but personable.
+        # Define the system prompt with instructions
+        system_prompt = """
+        You are a friendly assistant for a barber shop. Your job is to respond to customer messages
+        in a friendly, professional tone. Be concise but helpful.
+        
+        Use the following guidelines:
+        - For booking requests: Confirm the details that were understood and ask for any missing information
+        - For cancellation requests: Confirm the cancellation intent and request appointment details if missing
+        - For reschedule requests: Confirm the reschedule intent and ask for new date/time if missing
+        - For information requests: Provide relevant information or ask clarifying questions
+        - For greetings: Respond with a warm welcome
+        - For other intents: Offer general help options
+        
+        Keep responses under 100 words, friendly but professional.
         """
         
+        # Create the context object for the API call
+        context = {
+            "analysis": analysis_result
+        }
+        
+        if customer_name:
+            context["customer_name"] = customer_name
+            
+        if business_name:
+            context["business_name"] = business_name
+            
+        user_message = json.dumps(context)
+        
+        # Make API call to ChatGPT
         response = client.chat.completions.create(
-            model=OPENAI_MODEL,  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=100,
-            temperature=0.7
+            model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ]
         )
         
-        return response.choices[0].message.content
-        
+        # Get the generated response
+        result = response.choices[0].message.content
+        logger.info(f"Generated response: {result}")
+        return result
+    
     except Exception as e:
-        logger.error(f"Error generating appointment summary: {str(e)}")
-        return f"Appointment for {appointment_data.get('customer_name')} on {appointment_data.get('date')} at {appointment_data.get('time')} with {appointment_data.get('barber_name')} for a {appointment_data.get('service_name')}."
+        logger.error(f"Error generating response with ChatGPT: {str(e)}")
+        # Return a default response in case of error
+        if customer_name:
+            return f"Hello {customer_name}, I'm sorry, I'm having trouble processing your request. Please call our shop directly for assistance."
+        else:
+            return "I'm sorry, I'm having trouble processing your request. Please call our shop directly for assistance."
+
+def process_whatsapp_message(message, customer_info=None, business_name=None):
+    """
+    Process a WhatsApp message using ChatGPT to analyze and generate a response
+    
+    Args:
+        message: The incoming message text
+        customer_info: Optional dictionary with customer information
+        business_name: Optional business name to include in the response
+        
+    Returns:
+        dict: Processing result with analysis and response
+    """
+    try:
+        # Analyze the message
+        analysis = analyze_message(message, customer_info)
+        
+        # Generate a response
+        customer_name = customer_info.get('name') if customer_info else None
+        response_text = generate_response(analysis, customer_name, business_name)
+        
+        return {
+            'status': 'success',
+            'analysis': analysis,
+            'response': response_text
+        }
+    except Exception as e:
+        logger.error(f"Error processing WhatsApp message with ChatGPT: {str(e)}")
+        return {
+            'status': 'error',
+            'error': str(e)
+        }
