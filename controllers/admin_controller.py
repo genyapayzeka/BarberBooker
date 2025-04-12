@@ -10,7 +10,7 @@ import json
 import hashlib
 
 from config import ADMIN_USERNAME, ADMIN_PASSWORD, SESSION_TIMEOUT, BUSINESS_NAME
-from services import data_service
+from services import data_service, db_service
 from utils import validators, helpers
 
 logger = logging.getLogger(__name__)
@@ -76,10 +76,10 @@ def logout():
 def dashboard():
     """Admin dashboard"""
     # Get counts for dashboard
-    customers = data_service.get_customers()
-    appointments = data_service.get_appointments()
-    barbers = data_service.get_barbers()
-    services = data_service.get_services()
+    customers = db_service.get_customers()
+    appointments = db_service.get_appointments()
+    barbers = db_service.get_barbers()
+    services = db_service.get_services()
     
     # Get upcoming appointments (next 7 days)
     today = datetime.now().date()
