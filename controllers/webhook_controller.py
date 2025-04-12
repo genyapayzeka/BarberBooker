@@ -43,41 +43,83 @@ def process_whatsapp_webhook():
     This endpoint receives all incoming messages from WhatsApp
     """
     try:
-        # Get the JSON data from the request
-        data = request.json
+        # Check if the request has a JSON content type
+        if request.is_json:
+            data = request.json
+        else:
+            # If not JSON, try to parse from form data or raw data
+            data = {}
+            if request.form:
+                # Try to get data from form
+                for key in request.form:
+                    if key == 'Body':
+                        # This is likely a direct Twilio SMS/WhatsApp POST
+                        from_phone = request.form.get('From', '').replace('whatsapp:', '')
+                        sender_name = request.form.get('ProfileName', 'Customer')
+                        message_text = request.form.get('Body', '')
+                        
+                        # Process the message directly
+                        if from_phone and message_text:
+                            process_message(from_phone, sender_name, message_text)
+                            return jsonify({"status": "success"})
+                    try:
+                        # Try to parse any JSON strings in the form
+                        data[key] = json.loads(request.form[key])
+                    except:
+                        data[key] = request.form[key]
+            elif request.data:
+                # Try to parse raw data as JSON
+                try:
+                    data = json.loads(request.data.decode('utf-8'))
+                except:
+                    logger.warning("Could not parse request data as JSON")
+        
         logger.info(f"Received WhatsApp webhook data: {json.dumps(data)}")
         
-        # Check if this is a valid WhatsApp message
-        if not data or 'object' not in data:
-            return jsonify({"status": "error", "message": "Invalid request"}), 400
+        # Handle direct Twilio webhook format
+        if 'Body' in data and 'From' in data:
+            from_phone = data['From'].replace('whatsapp:', '')
+            sender_name = data.get('ProfileName', 'Customer')
+            message_text = data['Body']
             
-        if data['object'] != 'whatsapp_business_account':
-            return jsonify({"status": "error", "message": "Invalid object type"}), 400
-            
-        # Process all entries
-        for entry in data.get('entry', []):
-            for change in entry.get('changes', []):
-                if change.get('field') != 'messages':
-                    continue
-                    
-                value = change.get('value', {})
-                messages = value.get('messages', [])
+            # Process the message
+            process_message(from_phone, sender_name, message_text)
+            return jsonify({"status": "success"})
+        
+        # Handle Facebook/WhatsApp API format
+        if data and 'object' in data:
+            if data['object'] != 'whatsapp_business_account':
+                return jsonify({"status": "error", "message": "Invalid object type"}), 400
                 
-                for message in messages:
-                    # Only process text messages for now
-                    if message.get('type') != 'text':
+            # Process all entries
+            for entry in data.get('entry', []):
+                for change in entry.get('changes', []):
+                    if change.get('field') != 'messages':
                         continue
                         
-                    # Get message details
-                    phone_number = value.get('contacts', [{}])[0].get('wa_id')
-                    sender_name = value.get('contacts', [{}])[0].get('profile', {}).get('name', 'Customer')
-                    message_text = message.get('text', {}).get('body', '')
+                    value = change.get('value', {})
+                    messages = value.get('messages', [])
                     
-                    # Process the message
-                    process_message(phone_number, sender_name, message_text)
+                    for message in messages:
+                        # Only process text messages for now
+                        if message.get('type') != 'text':
+                            continue
+                            
+                        # Get message details
+                        phone_number = value.get('contacts', [{}])[0].get('wa_id')
+                        sender_name = value.get('contacts', [{}])[0].get('profile', {}).get('name', 'Customer')
+                        message_text = message.get('text', {}).get('body', '')
+                        
+                        # Process the message
+                        if phone_number and message_text:
+                            process_message(phone_number, sender_name, message_text)
+            
+            # Return a 200 OK response to acknowledge receipt
+            return jsonify({"status": "success"})
         
-        # Return a 200 OK response to acknowledge receipt
-        return jsonify({"status": "success"})
+        # If we get here, we didn't recognize the webhook format
+        logger.warning(f"Unrecognized webhook format: {json.dumps(data)}")
+        return jsonify({"status": "success"})  # Still return success to avoid retries
     
     except Exception as e:
         logger.error(f"Error processing WhatsApp webhook: {str(e)}")
