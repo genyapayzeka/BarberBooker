@@ -73,16 +73,52 @@ def send_appointment_confirmation(customer_phone, customer_name, appointment_dat
     try:
         # Format date for display
         date_obj = datetime.strptime(appointment_date, '%Y-%m-%d')
-        formatted_date = date_obj.strftime('%A, %B %d, %Y')
         
-        # Build message
-        message = f"Hello {customer_name}! Your appointment has been confirmed.\n\n"
-        message += f"Date: {formatted_date}\n"
-        message += f"Time: {appointment_time}\n"
-        message += f"Service: {service_name}\n"
-        message += f"Barber: {barber_name}\n\n"
-        message += f"Thank you for choosing {BUSINESS_NAME}. "
-        message += "Send 'HELP' for assistance or 'CANCEL' to cancel your appointment."
+        # Türkçe gün ve ay isimleri
+        turkish_days = {
+            'Monday': 'Pazartesi',
+            'Tuesday': 'Salı',
+            'Wednesday': 'Çarşamba',
+            'Thursday': 'Perşembe',
+            'Friday': 'Cuma',
+            'Saturday': 'Cumartesi',
+            'Sunday': 'Pazar'
+        }
+        
+        turkish_months = {
+            'January': 'Ocak',
+            'February': 'Şubat',
+            'March': 'Mart',
+            'April': 'Nisan',
+            'May': 'Mayıs',
+            'June': 'Haziran',
+            'July': 'Temmuz',
+            'August': 'Ağustos',
+            'September': 'Eylül',
+            'October': 'Ekim',
+            'November': 'Kasım',
+            'December': 'Aralık'
+        }
+        
+        # İngilizce formatı al
+        english_date = date_obj.strftime('%A, %B %d, %Y')
+        
+        # Türkçe'ye çevir
+        day_name = english_date.split(',')[0]
+        month_name = english_date.split(' ')[1]
+        day_num = english_date.split(' ')[2].replace(',', '')
+        year = english_date.split(' ')[3]
+        
+        formatted_date = f"{turkish_days[day_name]}, {day_num} {turkish_months[month_name]} {year}"
+        
+        # Build message in Turkish
+        message = f"Merhaba {customer_name}! Randevunuz onaylanmıştır.\n\n"
+        message += f"Tarih: {formatted_date}\n"
+        message += f"Saat: {appointment_time}\n"
+        message += f"Hizmet: {service_name}\n"
+        message += f"Berber: {barber_name}\n\n"
+        message += f"{BUSINESS_NAME}'i tercih ettiğiniz için teşekkür ederiz. "
+        message += "Yardım için 'YARDIM' yazabilir veya randevunuzu iptal etmek için 'İPTAL' yazabilirsiniz."
         
         return send_whatsapp_message(customer_phone, message)
     except Exception as e:
@@ -112,22 +148,58 @@ def send_appointment_reminder(customer_phone, customer_name, appointment_date,
     try:
         # Format date for display
         date_obj = datetime.strptime(appointment_date, '%Y-%m-%d')
-        formatted_date = date_obj.strftime('%A, %B %d, %Y')
         
-        # Build message
-        message = f"Hello {customer_name}! This is a reminder about your upcoming appointment.\n\n"
-        message += f"Date: {formatted_date}\n"
-        message += f"Time: {appointment_time}\n"
-        message += f"Service: {service_name}\n"
-        message += f"Barber: {barber_name}\n\n"
+        # Türkçe gün ve ay isimleri
+        turkish_days = {
+            'Monday': 'Pazartesi',
+            'Tuesday': 'Salı',
+            'Wednesday': 'Çarşamba',
+            'Thursday': 'Perşembe',
+            'Friday': 'Cuma',
+            'Saturday': 'Cumartesi',
+            'Sunday': 'Pazar'
+        }
+        
+        turkish_months = {
+            'January': 'Ocak',
+            'February': 'Şubat',
+            'March': 'Mart',
+            'April': 'Nisan',
+            'May': 'Mayıs',
+            'June': 'Haziran',
+            'July': 'Temmuz',
+            'August': 'Ağustos',
+            'September': 'Eylül',
+            'October': 'Ekim',
+            'November': 'Kasım',
+            'December': 'Aralık'
+        }
+        
+        # İngilizce formatı al
+        english_date = date_obj.strftime('%A, %B %d, %Y')
+        
+        # Türkçe'ye çevir
+        day_name = english_date.split(',')[0]
+        month_name = english_date.split(' ')[1]
+        day_num = english_date.split(' ')[2].replace(',', '')
+        year = english_date.split(' ')[3]
+        
+        formatted_date = f"{turkish_days[day_name]}, {day_num} {turkish_months[month_name]} {year}"
+        
+        # Build message in Turkish
+        message = f"Merhaba {customer_name}! Yaklaşan randevunuz hakkında bir hatırlatma.\n\n"
+        message += f"Tarih: {formatted_date}\n"
+        message += f"Saat: {appointment_time}\n"
+        message += f"Hizmet: {service_name}\n"
+        message += f"Berber: {barber_name}\n\n"
         
         if reminder_hours == 24:
-            message += f"Your appointment is tomorrow. "
+            message += f"Randevunuz yarın. "
         else:
-            message += f"Your appointment is in {reminder_hours} hours. "
+            message += f"Randevunuz {reminder_hours} saat içinde. "
             
-        message += f"We look forward to seeing you at {BUSINESS_NAME}. "
-        message += "Send 'HELP' for assistance or 'CANCEL' to cancel your appointment."
+        message += f"{BUSINESS_NAME} olarak sizi görmekten memnuniyet duyacağız. "
+        message += "Yardım için 'YARDIM' yazabilir veya randevunuzu iptal etmek için 'İPTAL' yazabilirsiniz."
         
         return send_whatsapp_message(customer_phone, message)
     except Exception as e:
@@ -153,14 +225,50 @@ def send_appointment_cancelled(customer_phone, customer_name, appointment_date, 
     try:
         # Format date for display
         date_obj = datetime.strptime(appointment_date, '%Y-%m-%d')
-        formatted_date = date_obj.strftime('%A, %B %d, %Y')
         
-        # Build message
-        message = f"Hello {customer_name}! Your appointment has been cancelled.\n\n"
-        message += f"Date: {formatted_date}\n"
-        message += f"Time: {appointment_time}\n\n"
-        message += f"Thank you for choosing {BUSINESS_NAME}. "
-        message += "Please contact us if you would like to reschedule."
+        # Türkçe gün ve ay isimleri
+        turkish_days = {
+            'Monday': 'Pazartesi',
+            'Tuesday': 'Salı',
+            'Wednesday': 'Çarşamba',
+            'Thursday': 'Perşembe',
+            'Friday': 'Cuma',
+            'Saturday': 'Cumartesi',
+            'Sunday': 'Pazar'
+        }
+        
+        turkish_months = {
+            'January': 'Ocak',
+            'February': 'Şubat',
+            'March': 'Mart',
+            'April': 'Nisan',
+            'May': 'Mayıs',
+            'June': 'Haziran',
+            'July': 'Temmuz',
+            'August': 'Ağustos',
+            'September': 'Eylül',
+            'October': 'Ekim',
+            'November': 'Kasım',
+            'December': 'Aralık'
+        }
+        
+        # İngilizce formatı al
+        english_date = date_obj.strftime('%A, %B %d, %Y')
+        
+        # Türkçe'ye çevir
+        day_name = english_date.split(',')[0]
+        month_name = english_date.split(' ')[1]
+        day_num = english_date.split(' ')[2].replace(',', '')
+        year = english_date.split(' ')[3]
+        
+        formatted_date = f"{turkish_days[day_name]}, {day_num} {turkish_months[month_name]} {year}"
+        
+        # Build message in Turkish
+        message = f"Merhaba {customer_name}! Randevunuz iptal edilmiştir.\n\n"
+        message += f"Tarih: {formatted_date}\n"
+        message += f"Saat: {appointment_time}\n\n"
+        message += f"{BUSINESS_NAME}'i tercih ettiğiniz için teşekkür ederiz. "
+        message += "Yeniden randevu almak isterseniz lütfen bizimle iletişime geçin."
         
         return send_whatsapp_message(customer_phone, message)
     except Exception as e:
