@@ -1025,11 +1025,42 @@ def settings():
         'sunday': 'Closed'
     }
     
+    # Get API configuration status
+    twilio_account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
+    twilio_auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
+    twilio_phone_number = os.environ.get('TWILIO_PHONE_NUMBER')
+    whatsapp_verify_token = os.environ.get('WHATSAPP_VERIFY_TOKEN')
+    openai_api_key = os.environ.get('OPENAI_API_KEY')
+    
+    # Generate the webhook URL for WhatsApp
+    host_url = request.host_url.rstrip('/')
+    webhook_url = f"{host_url}/webhook/whatsapp"
+    
+    # Get stats for system information
+    customer_count = len(db_service.get_customers())
+    appointment_count = len(db_service.get_appointments())
+    barber_count = len(db_service.get_barbers())
+    service_count = len(db_service.get_services())
+    version = "1.0.0"  # App version
+    data_dir = os.path.abspath('data')  # Data directory path
+    
     return render_template(
         'admin/settings.html',
         title='Admin Settings',
         business_name=BUSINESS_NAME,
-        business_hours=business_hours
+        business_hours=business_hours,
+        twilio_account_sid=twilio_account_sid,
+        twilio_auth_token=twilio_auth_token,
+        twilio_phone_number=twilio_phone_number,
+        whatsapp_verify_token=whatsapp_verify_token,
+        openai_api_key=openai_api_key,
+        webhook_url=webhook_url,
+        customer_count=customer_count,
+        appointment_count=appointment_count,
+        barber_count=barber_count,
+        service_count=service_count,
+        version=version,
+        data_dir=data_dir
     )
 
 @admin_bp.route('/send-reminders', methods=['POST'])
@@ -1048,21 +1079,73 @@ def send_reminders():
         tomorrow_str = tomorrow.strftime('%Y-%m-%d')
         
         sent_count = 0
+        error_count = 0
         appointments = db_service.get_appointments()
+        
+        # Check if WhatsApp integration is configured
+        has_whatsapp = all([
+            os.environ.get('TWILIO_ACCOUNT_SID'),
+            os.environ.get('TWILIO_AUTH_TOKEN'),
+            os.environ.get('TWILIO_PHONE_NUMBER')
+        ])
         
         for appt_id, appt in appointments.items():
             if appt.get('status') == 'scheduled':
                 appt_date = appt.get('date')
+                
+                # Only send reminders for today and tomorrow
                 if appt_date == today_str or appt_date == tomorrow_str:
-                    # In a real implementation, we would send messages here
-                    # For now, just count them
-                    sent_count += 1
+                    # Get customer, barber and service details
+                    customer_id = appt.get('customer_id')
+                    barber_id = appt.get('barber_id')
+                    service_id = appt.get('service_id')
+                    
+                    customer = db_service.get_customer(customer_id)
+                    barber = db_service.get_barber(barber_id)
+                    service = db_service.get_service(service_id)
+                    
+                    if customer and barber and service:
+                        # Calculate reminder hours
+                        reminder_hours = 24 if appt_date == tomorrow_str else 2
+                        
+                        if has_whatsapp:
+                            try:
+                                # Import here to avoid circular imports
+                                from services import whatsapp_service
+                                
+                                # Send WhatsApp reminder
+                                result = whatsapp_service.send_appointment_reminder(
+                                    customer_phone=customer.get('phone'),
+                                    customer_name=customer.get('name'),
+                                    appointment_date=appt_date,
+                                    appointment_time=appt.get('time'),
+                                    barber_name=barber.get('name'),
+                                    service_name=service.get('name'),
+                                    reminder_hours=reminder_hours
+                                )
+                                
+                                if result.get('status') == 'success':
+                                    sent_count += 1
+                                    logger.info(f"Sent reminder for appointment {appt_id} to {customer.get('name')}")
+                                else:
+                                    error_count += 1
+                                    logger.error(f"Failed to send reminder for appointment {appt_id}: {result.get('error')}")
+                            except Exception as e:
+                                error_count += 1
+                                logger.error(f"Error sending WhatsApp reminder: {str(e)}")
+                        else:
+                            # WhatsApp not configured, just count them
+                            sent_count += 1
+                            logger.info(f"Would send reminder for appointment {appt_id} to {customer.get('name')} (WhatsApp not configured)")
         
-        if sent_count > 0:
+        if error_count > 0:
+            flash(f'Sent {sent_count} reminders with {error_count} errors. Check logs for details.', 'warning')
+        elif sent_count > 0:
             flash(f'Successfully sent {sent_count} reminders for upcoming appointments', 'success')
         else:
             flash('No upcoming appointments found to send reminders', 'info')
     except Exception as e:
+        logger.error(f"Error sending reminders: {str(e)}")
         flash(f'Error sending reminders: {str(e)}', 'danger')
         
     return redirect(url_for('admin.dashboard'))
