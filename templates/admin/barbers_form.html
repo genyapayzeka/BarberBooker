@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} | {{ business_name }}</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-body-tertiary sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="mb-4 px-3">
+                        <h3>{{ business_name }}</h3>
+                        <p class="text-muted">Admin Panel</p>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                                <i class="bi bi-speedometer2 me-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.appointments') }}">
+                                <i class="bi bi-calendar-check me-2"></i>
+                                Appointments
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.customers') }}">
+                                <i class="bi bi-people me-2"></i>
+                                Customers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{{ url_for('admin.barbers') }}">
+                                <i class="bi bi-person-badge me-2"></i>
+                                Barbers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.services') }}">
+                                <i class="bi bi-scissors me-2"></i>
+                                Services
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.settings') }}">
+                                <i class="bi bi-gear me-2"></i>
+                                Settings
+                            </a>
+                        </li>
+                        <li class="nav-item mt-4">
+                            <a class="nav-link" href="{{ url_for('admin.logout') }}">
+                                <i class="bi bi-box-arrow-right me-2"></i>
+                                Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Form header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">{{ title }}</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.location.href='{{ url_for('admin.barbers') }}'">
+                            <i class="bi bi-arrow-left me-1"></i> Back to Barbers
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Barber form -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-person-badge me-1"></i> {{ 'Edit' if action == 'edit' else 'Create' }} Barber
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{{ url_for('admin.' + action + '_barber', barber_id=barber_id) if action == 'edit' else url_for('admin.create_barber') }}">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="name" class="form-label">Name</label>
+                                    <input type="text" class="form-control" id="name" name="name" value="{{ barber.name if barber else '' }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mt-4">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active" {% if barber and barber.is_active %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_active">Active</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="email" name="email" value="{{ barber.email if barber else '' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="phone" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" value="{{ barber.phone if barber else '' }}">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="bio" class="form-label">Bio</label>
+                                <textarea class="form-control" id="bio" name="bio" rows="3">{{ barber.bio if barber else '' }}</textarea>
+                                <div class="form-text">Short description of the barber's experience and expertise</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="specialties" class="form-label">Specialties</label>
+                                <div class="row">
+                                    {% for service_id, service in services.items() %}
+                                        <div class="col-md-4 mb-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="{{ service.name }}" id="specialty_{{ service_id }}" name="specialties" 
+                                                    {% if barber and barber.specialties and service.name in barber.specialties %}checked{% endif %}>
+                                                <label class="form-check-label" for="specialty_{{ service_id }}">
+                                                    {{ service.name }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Working Hours</label>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-3"><strong>Day</strong></div>
+                                            <div class="col-md-2"><strong>Working</strong></div>
+                                            <div class="col-md-3"><strong>Start Time</strong></div>
+                                            <div class="col-md-3"><strong>End Time</strong></div>
+                                        </div>
+                                        <hr>
+                                        
+                                        {% set days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
+                                        {% for day in days %}
+                                            <div class="row mb-3">
+                                                <div class="col-md-3">
+                                                    <label class="form-label">{{ day|capitalize }}</label>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input day-switch" type="checkbox" role="switch" 
+                                                               id="{{ day }}_working" name="{{ day }}_working" 
+                                                               data-day="{{ day }}"
+                                                               {% if barber and barber.working_hours and barber.working_hours[day] %}checked{% endif %}>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <input type="time" class="form-control" id="{{ day }}_start" name="{{ day }}_start" 
+                                                           {% if barber and barber.working_hours and barber.working_hours[day] %}
+                                                               value="{{ barber.working_hours[day].start }}"
+                                                           {% else %}
+                                                               value="09:00"
+                                                               disabled
+                                                           {% endif %}>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <input type="time" class="form-control" id="{{ day }}_end" name="{{ day }}_end" 
+                                                           {% if barber and barber.working_hours and barber.working_hours[day] %}
+                                                               value="{{ barber.working_hours[day].end }}"
+                                                           {% else %}
+                                                               value="17:00"
+                                                               disabled
+                                                           {% endif %}>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-secondary me-md-2" onclick="window.location.href='{{ url_for('admin.barbers') }}'">Cancel</button>
+                                <button type="submit" class="btn btn-primary">{{ 'Update' if action == 'edit' else 'Create' }} Barber</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    <script>
+        // Handle working days switches
+        document.addEventListener('DOMContentLoaded', function() {
+            const daySwitches = document.querySelectorAll('.day-switch');
+            
+            daySwitches.forEach(switch => {
+                switch.addEventListener('change', function() {
+                    const day = this.dataset.day;
+                    const startTime = document.getElementById(`${day}_start`);
+                    const endTime = document.getElementById(`${day}_end`);
+                    
+                    if (this.checked) {
+                        startTime.disabled = false;
+                        endTime.disabled = false;
+                    } else {
+                        startTime.disabled = true;
+                        endTime.disabled = true;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

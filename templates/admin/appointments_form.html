@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} | {{ business_name }}</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-body-tertiary sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="mb-4 px-3">
+                        <h3>{{ business_name }}</h3>
+                        <p class="text-muted">Admin Panel</p>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                                <i class="bi bi-speedometer2 me-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{{ url_for('admin.appointments') }}">
+                                <i class="bi bi-calendar-check me-2"></i>
+                                Appointments
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.customers') }}">
+                                <i class="bi bi-people me-2"></i>
+                                Customers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.barbers') }}">
+                                <i class="bi bi-person-badge me-2"></i>
+                                Barbers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.services') }}">
+                                <i class="bi bi-scissors me-2"></i>
+                                Services
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.settings') }}">
+                                <i class="bi bi-gear me-2"></i>
+                                Settings
+                            </a>
+                        </li>
+                        <li class="nav-item mt-4">
+                            <a class="nav-link" href="{{ url_for('admin.logout') }}">
+                                <i class="bi bi-box-arrow-right me-2"></i>
+                                Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Form header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">{{ title }}</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.location.href='{{ url_for('admin.appointments') }}'">
+                            <i class="bi bi-arrow-left me-1"></i> Back to Appointments
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Appointment form -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-calendar-plus me-1"></i> {{ 'Edit' if action == 'edit' else 'Create' }} Appointment
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{{ url_for('admin.' + action + '_appointment', appointment_id=appointment_id) if action == 'edit' else url_for('admin.create_appointment') }}">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="customer_id" class="form-label">Customer</label>
+                                    <select class="form-select" id="customer_id" name="customer_id" required>
+                                        <option value="">Select a customer</option>
+                                        {% for customer_id, customer in customers.items() %}
+                                            <option value="{{ customer_id }}" {% if appointment and appointment.customer_id == customer_id %}selected{% endif %}>
+                                                {{ customer.name }} ({{ customer.phone }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="service_id" class="form-label">Service</label>
+                                    <select class="form-select" id="service_id" name="service_id" required>
+                                        <option value="">Select a service</option>
+                                        {% for service_id, service in services.items() %}
+                                            <option value="{{ service_id }}" {% if appointment and appointment.service_id == service_id %}selected{% endif %}>
+                                                {{ service.name }} - ${{ service.price }} ({{ service.duration }} min)
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="barber_id" class="form-label">Barber</label>
+                                    <select class="form-select" id="barber_id" name="barber_id" required>
+                                        <option value="">Select a barber</option>
+                                        {% for barber_id, barber in barbers.items() %}
+                                            <option value="{{ barber_id }}" {% if appointment and appointment.barber_id == barber_id %}selected{% endif %}>
+                                                {{ barber.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="date" class="form-label">Date</label>
+                                    <input type="date" class="form-control" id="date" name="date" value="{{ appointment.date if appointment else '' }}" required>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="time" class="form-label">Time</label>
+                                    <input type="time" class="form-control" id="time" name="time" value="{{ appointment.time if appointment else '' }}" required>
+                                    <div id="available-times" class="mt-2"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    {% if action == 'edit' %}
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status" name="status" required>
+                                        <option value="scheduled" {% if appointment and appointment.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                                        <option value="completed" {% if appointment and appointment.status == 'completed' %}selected{% endif %}>Completed</option>
+                                        <option value="cancelled" {% if appointment and appointment.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                        <option value="no-show" {% if appointment and appointment.status == 'no-show' %}selected{% endif %}>No-Show</option>
+                                    </select>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3">{{ appointment.notes if appointment else '' }}</textarea>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-secondary me-md-2" onclick="window.location.href='{{ url_for('admin.appointments') }}'">Cancel</button>
+                                <button type="submit" class="btn btn-primary">{{ 'Update' if action == 'edit' else 'Create' }} Appointment</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    <script>
+        // Check availability when date/barber changes
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('date');
+            const barberInput = document.getElementById('barber_id');
+            const availableTimesDiv = document.getElementById('available-times');
+            
+            function checkAvailability() {
+                const date = dateInput.value;
+                const barberId = barberInput.value;
+                
+                if (!date || !barberId) return;
+                
+                availableTimesDiv.innerHTML = '<div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div> Checking availability...';
+                
+                fetch(`/admin/get-available-slots?date=${date}&barber_id=${barberId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const slots = data.data.slots;
+                            if (slots.length > 0) {
+                                availableTimesDiv.innerHTML = '<small class="text-success">Available times: ' + 
+                                    slots.map(slot => `<a href="#" class="time-slot" data-time="${slot}">${slot}</a>`).join(', ') + 
+                                    '</small>';
+                                
+                                // Add click handlers for time slots
+                                document.querySelectorAll('.time-slot').forEach(el => {
+                                    el.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        document.getElementById('time').value = this.dataset.time;
+                                    });
+                                });
+                            } else {
+                                availableTimesDiv.innerHTML = '<small class="text-danger">No available times for this date/barber</small>';
+                            }
+                        } else {
+                            availableTimesDiv.innerHTML = '<small class="text-danger">Error checking availability</small>';
+                        }
+                    })
+                    .catch(error => {
+                        availableTimesDiv.innerHTML = '<small class="text-danger">Error checking availability</small>';
+                        console.error('Error:', error);
+                    });
+            }
+            
+            dateInput.addEventListener('change', checkAvailability);
+            barberInput.addEventListener('change', checkAvailability);
+            
+            // Check initially if values are already set (e.g., in edit mode)
+            if (dateInput.value && barberInput.value) {
+                checkAvailability();
+            }
+        });
+    </script>
+</body>
+</html>

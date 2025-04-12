@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} | {{ business_name }}</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-body-tertiary sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="mb-4 px-3">
+                        <h3>{{ business_name }}</h3>
+                        <p class="text-muted">Admin Panel</p>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                                <i class="bi bi-speedometer2 me-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{{ url_for('admin.appointments') }}">
+                                <i class="bi bi-calendar-check me-2"></i>
+                                Appointments
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.customers') }}">
+                                <i class="bi bi-people me-2"></i>
+                                Customers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.barbers') }}">
+                                <i class="bi bi-person-badge me-2"></i>
+                                Barbers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.services') }}">
+                                <i class="bi bi-scissors me-2"></i>
+                                Services
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin.settings') }}">
+                                <i class="bi bi-gear me-2"></i>
+                                Settings
+                            </a>
+                        </li>
+                        <li class="nav-item mt-4">
+                            <a class="nav-link" href="{{ url_for('admin.logout') }}">
+                                <i class="bi bi-box-arrow-right me-2"></i>
+                                Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Appointments header -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Manage Appointments</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="window.location.href='{{ url_for('admin.create_appointment') }}'">
+                            <i class="bi bi-plus-circle me-1"></i> New Appointment
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-funnel-fill me-1"></i> Filter Appointments
+                    </div>
+                    <div class="card-body">
+                        <form method="get" action="{{ url_for('admin.appointments') }}" class="row g-3">
+                            <div class="col-md-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="">All Statuses</option>
+                                    <option value="scheduled" {% if current_status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                                    <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Completed</option>
+                                    <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                    <option value="no-show" {% if current_status == 'no-show' %}selected{% endif %}>No-Show</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="date" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="date" name="date" value="{{ current_date }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="barber_id" class="form-label">Barber</label>
+                                <select class="form-select" id="barber_id" name="barber_id">
+                                    <option value="">All Barbers</option>
+                                    {% for barber_id, barber in barbers.items() %}
+                                        <option value="{{ barber_id }}" {% if current_barber_id == barber_id %}selected{% endif %}>{{ barber.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary me-2">Apply Filters</button>
+                                <a href="{{ url_for('admin.appointments') }}" class="btn btn-outline-secondary">Clear</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Appointments table -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-calendar-check me-1"></i> Appointments
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Customer</th>
+                                        <th>Service</th>
+                                        <th>Barber</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if appointments %}
+                                        {% for appt in appointments %}
+                                            <tr class="
+                                                {% if appt.status == 'cancelled' %}table-danger{% endif %}
+                                                {% if appt.status == 'completed' %}table-success{% endif %}
+                                                {% if appt.status == 'no-show' %}table-warning{% endif %}
+                                            ">
+                                                <td>{{ appt.id }}</td>
+                                                <td>{{ appt.date }}</td>
+                                                <td>{{ appt.time }}</td>
+                                                <td>
+                                                    {% if appt.customer %}
+                                                        <a href="{{ url_for('admin.edit_customer', customer_id=appt.customer.id) }}" class="text-decoration-none">
+                                                            {{ appt.customer.name }}
+                                                        </a>
+                                                    {% else %}
+                                                        Unknown
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if appt.service %}
+                                                        {{ appt.service.name }}
+                                                    {% else %}
+                                                        Unknown
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if appt.barber %}
+                                                        {{ appt.barber.name }}
+                                                    {% else %}
+                                                        Unknown
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <span class="badge 
+                                                        {% if appt.status == 'scheduled' %}bg-primary{% endif %}
+                                                        {% if appt.status == 'completed' %}bg-success{% endif %}
+                                                        {% if appt.status == 'cancelled' %}bg-danger{% endif %}
+                                                        {% if appt.status == 'no-show' %}bg-warning{% endif %}
+                                                    ">
+                                                        {{ appt.status | capitalize }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                        <a href="{{ url_for('admin.edit_appointment', appointment_id=appt.id) }}" class="btn btn-sm btn-primary">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </a>
+                                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ appt.id }}">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                    
+                                                    <!-- Delete Modal -->
+                                                    <div class="modal fade" id="deleteModal{{ appt.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ appt.id }}" aria-hidden="true">
+                                                        <div class="modal-dialog">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h5 class="modal-title" id="deleteModalLabel{{ appt.id }}">Confirm Deletion</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    Are you sure you want to delete this appointment?
+                                                                    <p class="mt-3">
+                                                                        <strong>Date:</strong> {{ appt.date }}<br>
+                                                                        <strong>Time:</strong> {{ appt.time }}<br>
+                                                                        <strong>Customer:</strong> {{ appt.customer.name if appt.customer else 'Unknown' }}<br>
+                                                                        <strong>Service:</strong> {{ appt.service.name if appt.service else 'Unknown' }}
+                                                                    </p>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                                    <form action="{{ url_for('admin.delete_appointment', appointment_id=appt.id) }}" method="post">
+                                                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="8" class="text-center">No appointments found</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>

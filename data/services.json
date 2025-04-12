@@ -1,0 +1,59 @@
+{
+  "services": {
+    "1684153287545": {
+      "id": "1684153287545",
+      "name": "Haircut",
+      "description": "Classic haircut service with shampoo, cut, and style.",
+      "price": 25.00,
+      "duration": 30,
+      "category": "Hair",
+      "is_active": true,
+      "created_at": "2023-05-15T12:34:47.545Z",
+      "updated_at": "2023-05-15T12:34:47.545Z"
+    },
+    "1684153287546": {
+      "id": "1684153287546",
+      "name": "Beard Trim",
+      "description": "Professional beard shaping and trimming.",
+      "price": 15.00,
+      "duration": 15,
+      "category": "Facial Hair",
+      "is_active": true,
+      "created_at": "2023-05-15T12:34:47.546Z",
+      "updated_at": "2023-05-15T12:34:47.546Z"
+    },
+    "1684153287547": {
+      "id": "1684153287547",
+      "name": "Hot Towel Shave",
+      "description": "Traditional hot towel shave experience with straight razor.",
+      "price": 30.00,
+      "duration": 30,
+      "category": "Facial Hair",
+      "is_active": true,
+      "created_at": "2023-05-15T12:34:47.547Z",
+      "updated_at": "2023-05-15T12:34:47.547Z"
+    },
+    "1684153287548": {
+      "id": "1684153287548",
+      "name": "Haircut & Beard Trim Combo",
+      "description": "Complete grooming package with haircut and beard trim.",
+      "price": 35.00,
+      "duration": 45,
+      "category": "Combo",
+      "is_active": true,
+      "created_at": "2023-05-15T12:34:47.548Z",
+      "updated_at": "2023-05-15T12:34:47.548Z"
+    },
+    "1684153287549": {
+      "id": "1684153287549",
+      "name": "Kids Haircut",
+      "description": "Haircut service for children under 12.",
+      "price": 18.00,
+      "duration": 20,
+      "category": "Hair",
+      "is_active": true,
+      "created_at": "2023-05-15T12:34:47.549Z",
+      "updated_at": "2023-05-15T12:34:47.549Z"
+    }
+  }
+}
